@@ -1,0 +1,12 @@
+#!/bin/python
+import DMPSW
+import libDmpAlgTrk as trackAlg 
+
+#DMPSW.Core.Set("","")
+#DMPSW.RootIOSvc.Set("Input/FileName","")
+
+trkAlg = trackAlg.DmpAlgTrk()
+
+DMPSW.Core.Initialize()
+DMPSW.Core.ExecuteEventID(10)
+DMPSW.Core.Finalize()
