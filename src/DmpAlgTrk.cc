@@ -22,7 +22,7 @@ DmpAlgTrk::~DmpAlgTrk(){
 //-------------------------------------------------------------------
 bool DmpAlgTrk::Initialize(){
   eventNumber=0;
-	eventID=gCore->GetCurrentEventID();;
+	eventID=gCore->GetCurrentEventID();
   hitThreshold = 1.0;
 	bgoHits=new DmpEvtBgoHits();
   gDataBuffer->LinkRootFile("Event/Cal/Hits",bgoHits);
