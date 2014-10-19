@@ -30,7 +30,9 @@ private:
 	double         hitThreshold;
   DmpEvtBgoHits *bgoHits;
   TH2D          *trackXZ;
+  TH2D          *trackXZ2;
   TH2D          *trackYZ;
+  TH2D          *trackYZ2;
 };
 
 #endif

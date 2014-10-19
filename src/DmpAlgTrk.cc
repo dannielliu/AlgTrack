@@ -27,8 +27,10 @@ bool DmpAlgTrk::Initialize(){
 	bgoHits=new DmpEvtBgoHits();
   gDataBuffer->LinkRootFile("Event/Cal/Hits",bgoHits);
 	bgoHits = dynamic_cast<DmpEvtBgoHits*>(gDataBuffer->ReadObject("Event/Cal/Hits"));
-  trackXZ = new TH2D("trackXOZ","trackXOZ",22,0,22,14,0,14);// should be modified
-  trackYZ = new TH2D("trackYOZ","trackYOZ",22,0,22,14,0,14);
+  trackXZ = new TH2D("trackXOZ","trackXOZ",24,-330,330,16,15,479);// should be modified, x gap 27.5mm y gap 29.0mm
+  trackYZ = new TH2D("trackYOZ","trackYOZ",24,-330,330,16,15,479);// first z is 58.5, last z is 435.5
+  trackXZ2 = new TH2D("trackXOZ2","trackXOZ",24,-1,23,16,-1,15);
+  trackYZ2 = new TH2D("trackYOZ2","trackYOZ",24,-1,23,16,-1,15);
   return true;
 }
 
@@ -36,9 +38,10 @@ bool DmpAlgTrk::Initialize(){
 bool DmpAlgTrk::ProcessThisEvent(){
 	trackXZ->Reset();
 	trackYZ->Reset();
+	trackXZ2->Reset();
+	trackYZ2->Reset();
 	short hitbars=bgoHits->GetHittedBarNumber();
-  std::cout<<"hit bars is "<<hitbars<<std::endl;
-	if(hitbars==0){
+	if(hitbars==0){ 
 		return false;
 		DmpLogInfo<<"no hits for this event."<<DmpLogEndl;
 	}
@@ -47,46 +50,58 @@ bool DmpAlgTrk::ProcessThisEvent(){
   
 	//show crystal
 	for (short i=0;i<22;i++){
-	  for (short j=0;j<14;j++){
-		  j%2==1 ? trackXZ->Fill(i,j,0.1):trackYZ->Fill(i,j,0.1);
+	   for (short j=0;j<14;j++){
+		  j%2==0 ? trackYZ->Fill(-288.75+i*27.5, 435.5-j*29, 0.1):
+			         trackXZ->Fill(-288.75+i*27.5, 435.5-j*29, 0.1);
+							 // position x(or y)=-330+27.5*1.5+i*27.5, z=58.5+435.5-58.5-j*29
+		  j%2==0 ? trackYZ2->Fill(i,13-j,0.1):trackXZ2->Fill(i,13-j,0.1);
 		}
-	}
+	} 
 	// fill track
-  for (short i=0;i< bgoHits->GetHittedBarNumber();i++){
+  for (short i=0;i<bgoHits->GetHittedBarNumber();i++){
 	  double weight = bgoHits->fEnergy.at(i);
-		DmpLogInfo<<"energy of this hit is "<<weight<<DmpLogEndl;
+		//DmpLogInfo<<"energy of this hit is "<<weight<<DmpLogEndl;
 		if (weight < hitThreshold){
 		  continue;
 		}
-		//there is some problem here, should not fill posxx
-		/*//double posx = bgoHits->fPosition.at(i).x();
-		//double posy = bgoHits->fPosition.at(i).y();
-		//double posz = bgoHits->fPosition.at(i).z();*/
 		short layer = DmpBgoBase::GetLayerID(bgoHits->fGlobalBarID.at(i));
 		short bar   = DmpBgoBase::GetBarID(bgoHits->fGlobalBarID.at(i));
+		double posx = DmpBgoBase::Parameter()->BarCenter(bgoHits->fGlobalBarID.at(i)).x();
+		double posy = DmpBgoBase::Parameter()->BarCenter(bgoHits->fGlobalBarID.at(i)).y();
+		double posz = DmpBgoBase::Parameter()->LayerCenter(bgoHits->fGlobalBarID.at(i)).z();
+		//DmpLogInfo<<"z is "<<posz<<DmpLogEndl;
 		if (layer%2 == 0){
-		  trackXZ->Fill(bar,13-layer,weight);
-		}  
+		  trackYZ->Fill(posy,494-posz,weight);
+		  trackYZ2->Fill(bar,13-layer,weight);
+		}
 		else{
-		  trackYZ->Fill(bar,13-layer,weight);
-		}   
-	} 
+		  trackXZ->Fill(posx,494-posz,weight);
+		  trackXZ2->Fill(bar,13-layer,weight);
+		}
+	}   
 
 	// Draw track
-  TCanvas *c1 = new TCanvas("c1","track",1000,400);
+  TCanvas *c1 = new TCanvas("c1","track",1000,800);
 	gStyle->SetOptStat(0);
-	c1->Divide(2,1);
+	c1->Divide(2,2);
 	c1->cd(1);
 	trackXZ->Draw("colz");
 	ReverseYAxis(trackXZ);
 	c1->cd(2);
 	trackYZ->Draw("colz");
   ReverseYAxis(trackYZ);
+  c1->cd(3);
+	trackXZ2->Draw("colz");
+	ReverseYAxis(trackXZ2);
+	c1->cd(4);
+	trackYZ2->Draw("colz");
+  ReverseYAxis(trackYZ2);
 
 	// save canvas
 	char trackname[100];
 	sprintf(trackname,"track_eventid_%d.eps",eventID);
 	c1->Print(trackname);
+	delete c1;
   return true;
 }
 

@@ -39,7 +39,7 @@ void ReverseYAxis (TH1 *h)
                                h->GetYaxis()->GetXmin(),
                                h->GetYaxis()->GetXmax(),
                                510,"");
-  newaxis->SetLabelOffset(-0.01);
+  newaxis->SetLabelOffset(-0.03);
   //newaxis->LabelsOption("u");
   //newaxis->CenterLabels();
   newaxis->Draw();
