@@ -19,10 +19,14 @@ public:
   // if you need to set some options for your algorithm at run time. Overload Set()
   bool Initialize();
   bool ProcessThisEvent();    // only for algorithm
+  bool ProcessEvent(long eventID);
+  //bool ProcessEvents(long *eventID);
+  bool ProcessEvents(std::string eventID); // eventiD = "numberA:numberB", from numberA to numberB
   bool Finalize();
 
 private:
   int            eventNumber;
+	int            eventID;
 	double         hitThreshold;
   DmpEvtBgoHits *bgoHits;
   TH2D          *trackXZ;

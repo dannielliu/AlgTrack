@@ -2,8 +2,12 @@
 #include "DmpBgoBase.h"
 #include "DmpEvtBgoHits.h"
 #include "DmpDataBuffer.h"
+//#include "DmpRootIOSvc.h"
+#include "DmpCore.h"
 #include "TH2D.h"
 #include "TCanvas.h"
+#include "TStyle.h"
+#include "ReverseAxis.h"
 
 //-------------------------------------------------------------------
 DmpAlgTrk::DmpAlgTrk()
@@ -18,7 +22,9 @@ DmpAlgTrk::~DmpAlgTrk(){
 //-------------------------------------------------------------------
 bool DmpAlgTrk::Initialize(){
   eventNumber=0;
-  hitThreshold = 0.01;
+	eventID=gCore->GetCurrentEventID();;
+  hitThreshold = 1.0;
+	bgoHits=new DmpEvtBgoHits();
   gDataBuffer->LinkRootFile("Event/Cal/Hits",bgoHits);
 	bgoHits = dynamic_cast<DmpEvtBgoHits*>(gDataBuffer->ReadObject("Event/Cal/Hits"));
   trackXZ = new TH2D("trackXOZ","trackXOZ",22,0,22,14,0,14);// should be modified
@@ -28,52 +34,87 @@ bool DmpAlgTrk::Initialize(){
 
 //-------------------------------------------------------------------
 bool DmpAlgTrk::ProcessThisEvent(){
-  if(eventNumber>0){ 
-	  return false;
-	}
+	trackXZ->Reset();
+	trackYZ->Reset();
 	short hitbars=bgoHits->GetHittedBarNumber();
   std::cout<<"hit bars is "<<hitbars<<std::endl;
 	if(hitbars==0){
-	  eventNumber=0;
-		return true;
+		return false;
+		DmpLogInfo<<"no hits for this event."<<DmpLogEndl;
 	}
 	else
 	  eventNumber++;
-
-  for (short i=0;i<bgoHits->GetHittedBarNumber();i++){
+  
+	//show crystal
+	for (short i=0;i<22;i++){
+	  for (short j=0;j<14;j++){
+		  j%2==1 ? trackXZ->Fill(i,j,0.1):trackYZ->Fill(i,j,0.1);
+		}
+	}
+	// fill track
+  for (short i=0;i< bgoHits->GetHittedBarNumber();i++){
 	  double weight = bgoHits->fEnergy.at(i);
 		std::cout<<"energy of this hit is "<<weight<<std::endl;
 		if (weight < hitThreshold){
 		  continue;
 		}
-
 		//there is some problem here, should not fill posxx
-		double posx = bgoHits->fPosition.at(i).x();
-		double posy = bgoHits->fPosition.at(i).y();
-		double posz = bgoHits->fPosition.at(i).z();
+		/*//double posx = bgoHits->fPosition.at(i).x();
+		//double posy = bgoHits->fPosition.at(i).y();
+		//double posz = bgoHits->fPosition.at(i).z();*/
 		short layer = DmpBgoBase::GetLayerID(bgoHits->fGlobalBarID.at(i));
 		short bar   = DmpBgoBase::GetBarID(bgoHits->fGlobalBarID.at(i));
 		if (layer%2 == 0){
-		  //trackXZ->Fill(posx,posz,weight);
-		  trackXZ->Fill(bar,layer,weight);
-		} 
+		  trackXZ->Fill(bar,13-layer,weight);
+		 }  
 		else{
-		  //trackYZ->Fill(posy,posz,weight);
-		  trackYZ->Fill(bar,layer,weight);
-		}
-	}
-	//eventNumber++;
+		  trackYZ->Fill(bar,13-layer,weight);
+		}   
+	} 
 
 	// Draw track
-	std::cout<<"how are you?"<<std::endl;
-  TCanvas *c1 = new TCanvas("c1","track",600,800);
-	c1->Divide(1,2);
+  TCanvas *c1 = new TCanvas("c1","track",1000,400);
+	gStyle->SetOptStat(0);
+	c1->Divide(2,1);
 	c1->cd(1);
 	trackXZ->Draw("colz");
+	ReverseYAxis(trackXZ);
 	c1->cd(2);
 	trackYZ->Draw("colz");
-	c1->Print("track.eps");
+  ReverseYAxis(trackYZ);
+
+	// save canvas
+	char trackname[100];
+	sprintf(trackname,"track_eventid_%d.eps",eventID);
+	c1->Print(trackname);
   return true;
+}
+
+//-------------------------------------------------------------------
+bool DmpAlgTrk::ProcessEvent(long eventID)
+{
+  DmpAlgTrk::eventID=eventID;
+  gRootIOSvc->PrepareEvent(eventID);
+	return ProcessThisEvent();
+}
+
+//-------------------------------------------------------------------
+#include <boost/algorithm/string.hpp>
+//#include <vector>
+//#include <string>
+//#include <stdlib.h>
+bool DmpAlgTrk::ProcessEvents(std::string eventID)
+{
+  std::vector<std::string> tmp;
+  boost::split(tmp,eventID,boost::is_any_of(":"));
+	if (tmp.size()!=2) return false;
+	long startid, stopid;
+	tmp.at(0)!=""?startid = atoi(tmp.at(0).c_str()):startid=0;
+	tmp.at(1)!=""?stopid = atoi(tmp.at(1).c_str()): stopid = gCore->GetMaxEventNumber();
+	for (long id=startid;id<=stopid;id++){
+	  ProcessEvent(id);
+	}
+	return true;
 }
 
 //-------------------------------------------------------------------

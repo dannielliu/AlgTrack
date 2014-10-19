@@ -3,12 +3,14 @@ import DMPSW
 import libDmpAlgTrk as trackAlg 
 
 #DMPSW.Core.Set("EventNumber","10")
-DMPSW.RootIOSvc.Set("Input/FileName","/Volumes/data/Raw_BgoHits.root")
+DMPSW.RootIOSvc.Set("Input/FileName","/Volumes/data/A2_PlaybackScienceData_BPDU_A2data0020140912_BgoHits.root")
+#DMPSW.RootIOSvc.Set("Input/FileName","/Volumes/data/Raw_BgoHits.root")
 
 trkAlg = trackAlg.DmpAlgTrk()
 DMPSW.AlgMgr.Append(trkAlg)
 
 DMPSW.Core.Initialize()
-#DMPSW.Core.ExecuteEventID(10)
-DMPSW.Core.Run()
+#DMPSW.Core.Run()  # you should not use this function in this algrithm
+#trkAlg.ProcessEvent(200)
+trkAlg.ProcessEvents(":3")
 DMPSW.Core.Finalize()
