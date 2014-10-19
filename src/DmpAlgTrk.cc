@@ -54,7 +54,7 @@ bool DmpAlgTrk::ProcessThisEvent(){
 	// fill track
   for (short i=0;i< bgoHits->GetHittedBarNumber();i++){
 	  double weight = bgoHits->fEnergy.at(i);
-		std::cout<<"energy of this hit is "<<weight<<std::endl;
+		DmpLogInfo<<"energy of this hit is "<<weight<<DmpLogEndl;
 		if (weight < hitThreshold){
 		  continue;
 		}
@@ -66,7 +66,7 @@ bool DmpAlgTrk::ProcessThisEvent(){
 		short bar   = DmpBgoBase::GetBarID(bgoHits->fGlobalBarID.at(i));
 		if (layer%2 == 0){
 		  trackXZ->Fill(bar,13-layer,weight);
-		 }  
+		}  
 		else{
 		  trackYZ->Fill(bar,13-layer,weight);
 		}   
@@ -105,14 +105,30 @@ bool DmpAlgTrk::ProcessEvent(long eventID)
 //#include <stdlib.h>
 bool DmpAlgTrk::ProcessEvents(std::string eventID)
 {
+  // analyse the input string
+	std::vector<long> eventIDs;
   std::vector<std::string> tmp;
   boost::split(tmp,eventID,boost::is_any_of(":"));
-	if (tmp.size()!=2) return false;
-	long startid, stopid;
-	tmp.at(0)!=""?startid = atoi(tmp.at(0).c_str()):startid=0;
-	tmp.at(1)!=""?stopid = atoi(tmp.at(1).c_str()): stopid = gCore->GetMaxEventNumber();
-	for (long id=startid;id<=stopid;id++){
-	  ProcessEvent(id);
+	if (tmp.size()==2){
+	  long startid, stopid;
+	  tmp.at(0)!=""?startid = atoi(tmp.at(0).c_str()):startid=0;
+	  tmp.at(1)!=""?stopid = atoi(tmp.at(1).c_str()): stopid = gCore->GetMaxEventNumber(); 
+	  for (long id=startid;id<=stopid;id++){
+	    eventIDs.push_back(id);
+	  }
+	}
+	else{
+	  tmp.clear();
+		boost::split(tmp,eventID,boost::is_any_of(" "));
+		for (long i=0;i<tmp.size();i++){
+		  eventIDs.push_back(atoi(tmp.at(i).c_str()));
+		}
+	}
+	// analyse end
+
+  // draw track/tracks
+	for (long index=0;index<eventIDs.size();index++){
+	  ProcessEvent(eventIDs.at(index));
 	}
 	return true;
 }
