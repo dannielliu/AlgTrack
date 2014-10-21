@@ -29,10 +29,10 @@ private:
 	int            eventID;
 	double         hitThreshold;
   DmpEvtBgoHits *bgoHits;
-  TH2D          *trackXZ;
-  TH2D          *trackXZ2;
-  TH2D          *trackYZ;
-  TH2D          *trackYZ2;
+  TH2D          *trackXZ0;
+  TH2D          *trackXZ1;
+  TH2D          *trackYZ0;
+  TH2D          *trackYZ1;
 };
 
 #endif
