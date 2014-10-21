@@ -27,7 +27,7 @@ bool DmpAlgTrk::Initialize(){
 	bgoHits=new DmpEvtBgoHits();
   gDataBuffer->LinkRootFile("Event/Cal/Hits",bgoHits);
 	bgoHits = dynamic_cast<DmpEvtBgoHits*>(gDataBuffer->ReadObject("Event/Cal/Hits"));
-  trackXZ = new TH2D("trackXOZ","trackXOZ",24,-330,330,16,15,479);// should be modified, x gap 27.5mm y gap 29.0mm
+  trackXZ = new TH2D("trackXOZ","trackXOZ",24+20,-330-27.5*10,330+27.5*10,16+10,15-10*29,479);// should be modified, x gap 27.5mm y gap 29.0mm
   trackYZ = new TH2D("trackYOZ","trackYOZ",24,-330,330,16,15,479);// first z is 58.5, last z is 435.5
   trackXZ2 = new TH2D("trackXOZ2","trackXOZ",24,-1,23,16,-1,15);
   trackYZ2 = new TH2D("trackYOZ2","trackYOZ",24,-1,23,16,-1,15);
@@ -49,10 +49,10 @@ bool DmpAlgTrk::ProcessThisEvent(){
 	  eventNumber++;
   
 	//show crystal
-	for (short i=0;i<22;i++){
-	   for (short j=0;j<14;j++){
+	for (short i=0;i<22;i++){ 
+	   for (short j=0;j<14;j++ ){
 		  j%2==0 ? trackYZ->Fill(-288.75+i*27.5, 435.5-j*29, 0.1):
-			         trackXZ->Fill(-288.75+i*27.5, 435.5-j*29, 0.1);
+			         trackXZ->Fill(-288.75+i*27.5, 435.5-j*29-10*29, 0.1);
 							 // position x(or y)=-330+27.5*1.5+i*27.5, z=58.5+435.5-58.5-j*29
 		  j%2==0 ? trackYZ2->Fill(i,13-j,0.1):trackXZ2->Fill(i,13-j,0.1);
 		}
@@ -75,7 +75,7 @@ bool DmpAlgTrk::ProcessThisEvent(){
 		  trackYZ2->Fill(bar,13-layer,weight);
 		}
 		else{
-		  trackXZ->Fill(posx,494-posz,weight);
+		  trackXZ->Fill(posx,494-posz-29*10,weight);
 		  trackXZ2->Fill(bar,13-layer,weight);
 		}
 	}   
